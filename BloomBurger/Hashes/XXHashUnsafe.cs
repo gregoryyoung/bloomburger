@@ -42,10 +42,9 @@ namespace BloomBurger.Hashes
 
         public unsafe UInt32 Hash(string s)
         {
-            var data = s.ToCharArray();
-            fixed (char* input = &data[0])
+            fixed (char* input = s)
             {
-                return Hash((byte*)input, (uint)data.Length * sizeof(char), Seed);
+                return Hash((byte*)input, (uint)s.Length * sizeof(char), Seed);
             }
         }
 
