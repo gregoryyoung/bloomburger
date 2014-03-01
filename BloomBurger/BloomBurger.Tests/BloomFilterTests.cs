@@ -51,5 +51,13 @@ namespace BloomBurger.Tests
             Assert.IsFalse(filter.Contains(Encoding.ASCII.GetBytes("Hi There")));
         }
 
+        [Test]
+        public void when_hashing_two_items_the_hashed_items_should_be_two()
+        {
+            var filter = BloomFilter.FromManagedArray(4096, new IHasher[] { new Murmur2Unsafe(), new XXHashUnsafe() });
+            filter.Add(Encoding.ASCII.GetBytes("Hello There"));
+            filter.Add(Encoding.ASCII.GetBytes("Hi There"));
+            Assert.AreEqual(2, filter.HashedItems);
+        }
     }
 }

@@ -30,6 +30,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Threading;
 using BloomBurger.Hashes;
 
 namespace BloomBurger
@@ -41,9 +42,14 @@ namespace BloomBurger
         private int _numberOfHashes;
         private readonly IHasher[] _hashes;
         private readonly Int32* _storage;
-        private long _storageSize;
+        private readonly long _storageSize;
 
-        private BloomFilter(IntPtr storage, long storageSize, IEnumerable<IHasher> hashes)
+        public int HashedItems
+        {
+            get { return _storage[_storageSize]; }
+        }
+
+        public BloomFilter(IntPtr storage, long storageSize, IEnumerable<IHasher> hashes)
         {
             _storageSize = storageSize;
             _hashes = hashes.ToArray();
@@ -52,7 +58,7 @@ namespace BloomBurger
 
         public static BloomFilter FromManagedArray(int size, IEnumerable<IHasher> hashes)
         {
-            var memory = new Int32[size];
+            var memory = new Int32[size + 1];
             var handle = GCHandle.Alloc(memory, GCHandleType.Pinned);
             return new BloomFilter(handle.AddrOfPinnedObject(), size, hashes);
         }
@@ -66,6 +72,7 @@ namespace BloomBurger
                 var mask = 1 << (Int32)loc % 32;
                 _storage[loc] |= mask;
             }
+            Interlocked.Increment(ref _storage[_storageSize]);
         }
 
         public bool Contains(byte [] data)
