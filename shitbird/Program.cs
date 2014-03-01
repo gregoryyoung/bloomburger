@@ -51,6 +51,7 @@ namespace shitbird
 
        private static void MemoryMappedFile()
         {
+            //IF RUNNING IN MONO REMEMBER THAT YOU HAVE TO EXPORT LD_LIBRARY_PATH TO POINT TO MONO LIB FOLDER FOR POSIXHELPER.SO
             Console.WriteLine("Memory Mapped File.");
             var filename = @"fofadasfho";
             var size = 6000 * MEGABYTE;
