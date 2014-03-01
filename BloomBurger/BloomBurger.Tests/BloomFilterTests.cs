@@ -26,59 +26,30 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // 
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.InteropServices;
+using System.Text;
 using BloomBurger.Hashes;
+using NUnit.Framework;
 
-namespace BloomBurger
+namespace BloomBurger.Tests
 {
-    public unsafe class BloomFilter
+    [TestFixture]
+    public class BloomFilterTests
     {
-        private int _expectedCount;
-        private int _currentlyAdded;
-        private int _numberOfHashes;
-        private readonly IHasher[] _hashes;
-        private readonly Int32* _storage;
-        private long _storageSize;
-
-        private BloomFilter(IntPtr storage, long storageSize, IEnumerable<IHasher> hashes)
+        [Test]
+        public void when_adding_a_value_it_contains_it()
         {
-            _storageSize = storageSize;
-            _hashes = hashes.ToArray();
-            _storage = (Int32*) storage.ToPointer();
+            var filter = BloomFilter.FromManagedArray(4096, new IHasher[] {new Murmur2Unsafe(), new XXHashUnsafe()});
+            filter.Add(Encoding.ASCII.GetBytes("Hello There"));
+            Assert.IsTrue(filter.Contains(Encoding.ASCII.GetBytes("Hello There")));
         }
 
-        public static BloomFilter FromManagedArray(int size, IEnumerable<IHasher> hashes)
+        [Test]
+        public void when_adding_a_value_it_does_not_contain_another()
         {
-            var memory = new Int32[size];
-            var handle = GCHandle.Alloc(memory, GCHandleType.Pinned);
-            return new BloomFilter(handle.AddrOfPinnedObject(), size, hashes);
+            var filter = BloomFilter.FromManagedArray(4096, new IHasher[] { new Murmur2Unsafe(), new XXHashUnsafe() });
+            filter.Add(Encoding.ASCII.GetBytes("Hello There"));
+            Assert.IsFalse(filter.Contains(Encoding.ASCII.GetBytes("Hi There")));
         }
 
-        public void Add(byte [] data)
-        {
-            for(int i=0;i<_hashes.Length;i++)
-            {
-                var hash = _hashes[i].Hash(data);
-                var loc = hash % _storageSize;
-                var mask = 1 << (Int32)loc % 32;
-                _storage[loc] |= mask;
-            }
-        }
-
-        public bool Contains(byte [] data)
-        {
-            for(int i=0;i<_hashes.Length;i++)
-            {
-                var hash = _hashes[i].Hash(data);
-                var loc = hash % _storageSize;
-                var mask = 1 << (Int32) loc%32;
-                if ((_storage[loc] & mask) == 0)
-                    return false;
-            }
-            return true;
-        }
     }
 }
