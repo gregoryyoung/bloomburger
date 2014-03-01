@@ -26,15 +26,30 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // 
 
+using System.Collections.Generic;
 using System.IO.MemoryMappedFiles;
+using System.Linq;
+using System.Runtime.InteropServices;
+using BloomBurger.Hashes;
 
 namespace BloomBurger
 {
-    public class BloomFilter
+    public unsafe class BloomFilter
     {
-        private MemoryMappedFile _file;
+        private int _expectedCount;
+        private int _currentlyAdded;
+        private int _numberOfHashes;
+        private IHasher[] _hashes;
+        private byte* _storage;
+        private int _storageSize;
 
-        public BloomFilter(bool memoryOnly, long size, string filename)
+        public BloomFilter(SafeHandle storage, long storageSize, IEnumerable<IHasher> hashes)
+        {
+            _hashes = hashes.ToArray();
+            _storage = (byte*) storage.DangerousGetHandle().ToPointer();
+        }
+
+        public void Contains(byte [] data)
         {
             
         }
