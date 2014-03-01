@@ -37,9 +37,6 @@ namespace BloomBurger
 {
     public unsafe class BloomFilter
     {
-        private int _expectedCount;
-        private int _currentlyAdded;
-        private int _numberOfHashes;
         private readonly IHasher[] _hashes;
         private readonly Int32* _storage;
         private readonly long _storageSize;
@@ -48,6 +45,17 @@ namespace BloomBurger
         {
             get { return _storage[_storageSize]; }
         }
+
+        public double ProbabilityOfFalsePositive
+        {
+            get
+            {
+                return Math.Pow(
+                    (1 - Math.Exp((double) (-_hashes.Length)*HashedItems/(_storageSize << 5)))
+                    , _hashes.Length);
+            }
+        }
+
 
         public BloomFilter(IntPtr storage, long storageSize, IEnumerable<IHasher> hashes)
         {

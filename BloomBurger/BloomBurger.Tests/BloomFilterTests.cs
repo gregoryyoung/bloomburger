@@ -59,5 +59,20 @@ namespace BloomBurger.Tests
             filter.Add(Encoding.ASCII.GetBytes("Hi There"));
             Assert.AreEqual(2, filter.HashedItems);
         }
+
+        [Test]
+        public void with_nothing_hashed_probability_of_false_positive_is_zero()
+        {
+            var filter = BloomFilter.FromManagedArray(4096, new IHasher[] { new Murmur2Unsafe(), new XXHashUnsafe() });
+            Assert.AreEqual(0, filter.ProbabilityOfFalsePositive);
+        }
+
+        [Test]
+        public void with_something_hashed_probability_is_calculated_reasonably()
+        {
+            var filter = BloomFilter.FromManagedArray(1024, new IHasher[] { new Murmur2Unsafe(), new XXHashUnsafe() });
+            filter.Add(Encoding.ASCII.GetBytes("Hi There"));
+            Assert.IsTrue(filter.ProbabilityOfFalsePositive < 0.000001);
+        }
     }
 }
