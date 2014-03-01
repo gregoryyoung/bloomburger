@@ -71,16 +71,31 @@ namespace BloomBurger
             return new BloomFilter(handle.AddrOfPinnedObject(), size, hashes);
         }
 
+        public void Add(string data)
+        {
+            for (int i = 0; i < _hashes.Length; i++)
+            {
+                var hash = _hashes[i].Hash(data);
+                Insert(hash);
+            }
+            Interlocked.Increment(ref _storage[_storageSize]);
+        }
+
         public void Add(byte [] data)
         {
             for(int i=0;i<_hashes.Length;i++)
             {
                 var hash = _hashes[i].Hash(data);
-                var loc = hash % _storageSize;
-                var mask = 1 << (Int32)loc % 32;
-                _storage[loc] |= mask;
+                Insert(hash);
             }
             Interlocked.Increment(ref _storage[_storageSize]);
+        }
+
+        private unsafe void Insert(uint hash)
+        {
+            var loc = hash%_storageSize;
+            var mask = 1 << (Int32) loc%32;
+            _storage[loc] |= mask;
         }
 
         public bool Contains(byte [] data)
@@ -88,12 +103,28 @@ namespace BloomBurger
             for(int i=0;i<_hashes.Length;i++)
             {
                 var hash = _hashes[i].Hash(data);
-                var loc = hash % _storageSize;
-                var mask = 1 << (Int32) loc%32;
-                if ((_storage[loc] & mask) == 0)
+                if(Check(hash, i)) 
                     return false;
             }
             return true;
+        }
+
+        public bool Contains(string data)
+        {
+            for (int i = 0; i < _hashes.Length; i++)
+            {
+                var hash = _hashes[i].Hash(data);
+                if (Check(hash, i))
+                    return false;
+            }
+            return true;
+        }
+
+        private unsafe bool Check(long hash, int i)
+        {
+            var loc = hash%_storageSize;
+            var mask = 1 << (Int32) loc%32;
+            return (_storage[loc] & mask) == 0;
         }
     }
 }
