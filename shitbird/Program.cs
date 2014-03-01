@@ -44,22 +44,53 @@ namespace shitbird
 
         static void Main(string[] args)
         {
-           MemoryMappedFile();
+            //TestHashes();
+            MemoryMappedFile();
             UnmanagedMemory();
             ManagedMemory();
+        }
+
+        private static void TestHashes() {
+            var s = new Stopwatch();
+            s.Start();
+            for(int i=0;i<10000000;i++) {
+                var y = i.ToString("00000000000000000000000").GetHashCode();
+            }
+            Console.WriteLine(".net " + s.Elapsed);
+            s.Reset();
+            s.Start();
+            var hasher = new Murmur2Unsafe();
+            for(int i=0;i<10000000;i++) {
+                hasher.Hash(i.ToString("00000000000000000000000"));
+            }
+            Console.WriteLine("mm2a " + s.Elapsed);
+            s.Reset();
+            s.Start();
+            var hasher2 = new Murmur3AUnsafe();
+            for(int i=0;i<10000000;i++) {
+                hasher2.Hash(i.ToString("00000000000000000000000"));
+            }
+            Console.WriteLine("mm3a " + s.Elapsed);
+            s.Reset();
+            s.Start();
+            var hasher3 = new XXHashUnsafe();
+            for(int i=0;i<10000000;i++) {
+                hasher3.Hash(i.ToString("00000000000000000000000"));
+            }
+            Console.WriteLine("xx " + s.Elapsed);
         }
 
        private static void MemoryMappedFile()
         {
             //IF RUNNING IN MONO REMEMBER THAT YOU HAVE TO EXPORT LD_LIBRARY_PATH TO POINT TO MONO LIB FOLDER FOR POSIXHELPER.SO
             Console.WriteLine("Memory Mapped File.");
-            var filename = @"fofadasfho";
+            var filename = @"fofadasfddsho";
             var size = 6000 * MEGABYTE;
             using(var file = File.Open(filename, FileMode.OpenOrCreate)) {
                 file.SetLength(size + 1);
             }
             using (
-                var memmap = System.IO.MemoryMappedFiles.MemoryMappedFile.CreateFromFile(filename, FileMode.OpenOrCreate, "MyMap2", size,
+                var memmap = System.IO.MemoryMappedFiles.MemoryMappedFile.CreateFromFile(filename, FileMode.OpenOrCreate, "MyMap23", size,
                                                              MemoryMappedFileAccess.ReadWrite))
             {
                 using (var view = memmap.CreateViewAccessor(0, size, MemoryMappedFileAccess.ReadWrite))
@@ -68,7 +99,7 @@ namespace shitbird
                     watch.Start();
                     var filter = new BloomFilter(view.SafeMemoryMappedViewHandle.DangerousGetHandle(), size/4,
                                                  new IHasher[] {new Murmur3AUnsafe(), new XXHashUnsafe()});
-                    for (int i = 0; i < 1000000; i++)
+                    for (int i = 0; i < 400000; i++)
                     {
                         var bytes = Guid.NewGuid().ToByteArray();
                         filter.Add(bytes);
