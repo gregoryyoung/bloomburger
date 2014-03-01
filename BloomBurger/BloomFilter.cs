@@ -51,14 +51,14 @@ namespace BloomBurger
 
         public BloomFilter(IntPtr storage, long storageSize, IEnumerable<IHasher> hashes)
         {
-            _storageSize = storageSize;
+            _storageSize = storageSize - 1;
             _hashes = hashes.ToArray();
             _storage = (Int32*) storage.ToPointer();
         }
 
         public static BloomFilter FromManagedArray(int size, IEnumerable<IHasher> hashes)
         {
-            var memory = new Int32[size + 1];
+            var memory = new Int32[size];
             var handle = GCHandle.Alloc(memory, GCHandleType.Pinned);
             return new BloomFilter(handle.AddrOfPinnedObject(), size, hashes);
         }

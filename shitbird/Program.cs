@@ -30,6 +30,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.IO.MemoryMappedFiles;
+using System.Runtime.InteropServices;
 using BloomBurger;
 using BloomBurger.Hashes;
 
@@ -43,34 +44,98 @@ namespace shitbird
 
         static void Main(string[] args)
         {
-            var filename = @"C:\curl\fohjjho";
-            var size = 500 * MEGABYTE;
-            using(var memmap = MemoryMappedFile.CreateFromFile(filename, FileMode.OpenOrCreate, "MyMap2", size, MemoryMappedFileAccess.ReadWrite))
+            MemoryMappedFile();
+            UnmanagedMemory();
+            ManagedMemory();
+        }
+
+        private static void MemoryMappedFile()
+        {
+            Console.WriteLine("Memory Mapped File.");
+            var filename = @"C:\curl\fofadasfho";
+            var size = 600 * MEGABYTE;
+            using (
+                var memmap = System.IO.MemoryMappedFiles.MemoryMappedFile.CreateFromFile(filename, FileMode.OpenOrCreate, "MyMap2", size,
+                                                             MemoryMappedFileAccess.ReadWrite))
             {
-                 using(var view = memmap.CreateViewAccessor(0, size, MemoryMappedFileAccess.ReadWrite))
-                 {
-                     var watch = new Stopwatch();
-                     watch.Start();
-                     var filter = new BloomFilter(view.SafeMemoryMappedViewHandle.DangerousGetHandle(), size/4,
-                                                  new IHasher[] {new Murmur3AUnsafe(), new XXHashUnsafe()});
-                     for(int i=0;i<10000000;i++)
-                     {
-                         var bytes = Guid.NewGuid().ToByteArray();
-                         filter.Add(bytes);
-                         if(!filter.Contains(bytes))
-                         {
-                             throw new Exception("broken");
-                         }
-                         if (i % 100000 == 0)
-                         {
-                             Console.Write(".");
-                         }
-                     }
-                     Console.WriteLine();
-                     Console.WriteLine(watch.Elapsed);
-                 }                    
+                using (var view = memmap.CreateViewAccessor(0, size, MemoryMappedFileAccess.ReadWrite))
+                {
+                    var watch = new Stopwatch();
+                    watch.Start();
+                    var filter = new BloomFilter(view.SafeMemoryMappedViewHandle.DangerousGetHandle(), size/4,
+                                                 new IHasher[] {new Murmur3AUnsafe(), new XXHashUnsafe()});
+                    for (int i = 0; i < 1000000; i++)
+                    {
+                        var bytes = Guid.NewGuid().ToByteArray();
+                        filter.Add(bytes);
+                        if (!filter.Contains(bytes))
+                        {
+                            throw new Exception("broken");
+                        }
+                        if (i%100000 == 0)
+                        {
+                            Console.Write(".");
+                        }
+                    }
+                    Console.WriteLine();
+                    Console.WriteLine(watch.Elapsed);
+                }
             }
             File.Delete(filename);
         }
+
+        private unsafe static void UnmanagedMemory()
+        {
+            Console.WriteLine("Unmanaged Memory");
+            const int size = (int) (500*MEGABYTE);
+
+            var watch = new Stopwatch();
+            watch.Start();
+            var ptr = Marshal.AllocHGlobal(size);
+            var filter = new BloomFilter(ptr, size/4,
+                                         new IHasher[] {new Murmur3AUnsafe(), new XXHashUnsafe()});
+            for (int i = 0; i < 1000000; i++)
+            {
+                var bytes = Guid.NewGuid().ToByteArray();
+                filter.Add(bytes);
+                if (!filter.Contains(bytes))
+                {
+                    throw new Exception("broken");
+                }
+                if (i%100000 == 0)
+                {
+                    Console.Write(".");
+                }
+            }
+            Console.WriteLine();
+            Console.WriteLine(watch.Elapsed);
+            Marshal.FreeHGlobal(ptr);
+        }
+
+        private unsafe static void ManagedMemory()
+        {
+            Console.WriteLine("Managed Memory");
+            const int size = (int)(500 * MEGABYTE);
+
+            var watch = new Stopwatch();
+            watch.Start();
+            var filter = BloomFilter.FromManagedArray(size, new IHasher[] { new Murmur3AUnsafe(), new XXHashUnsafe() });
+            for (int i = 0; i < 1000000; i++)
+            {
+                var bytes = Guid.NewGuid().ToByteArray();
+                filter.Add(bytes);
+                if (!filter.Contains(bytes))
+                {
+                    throw new Exception("broken");
+                }
+                if (i % 100000 == 0)
+                {
+                    Console.Write(".");
+                }
+            }
+            Console.WriteLine();
+            Console.WriteLine(watch.Elapsed);
+        }
+
     }
 }
