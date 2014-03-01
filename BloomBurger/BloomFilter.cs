@@ -59,7 +59,8 @@ namespace BloomBurger
 
         public BloomFilter(IntPtr storage, long storageSize, IEnumerable<IHasher> hashes)
         {
-            _storageSize = storageSize - 1;
+            //TODO force Int32 alignment for storage
+            _storageSize = storageSize - 1; //last int is used to hold count of writes
             _hashes = hashes.ToArray();
             _storage = (Int32*) storage.ToPointer();
         }
