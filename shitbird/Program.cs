@@ -44,16 +44,19 @@ namespace shitbird
 
         static void Main(string[] args)
         {
-            MemoryMappedFile();
+           MemoryMappedFile();
             UnmanagedMemory();
             ManagedMemory();
         }
 
-        private static void MemoryMappedFile()
+       private static void MemoryMappedFile()
         {
             Console.WriteLine("Memory Mapped File.");
-            var filename = @"C:\curl\fofadasfho";
-            var size = 600 * MEGABYTE;
+            var filename = @"fofadasfho";
+            var size = 6000 * MEGABYTE;
+            using(var file = File.Open(filename, FileMode.OpenOrCreate)) {
+                file.SetLength(size + 1);
+            }
             using (
                 var memmap = System.IO.MemoryMappedFiles.MemoryMappedFile.CreateFromFile(filename, FileMode.OpenOrCreate, "MyMap2", size,
                                                              MemoryMappedFileAccess.ReadWrite))
