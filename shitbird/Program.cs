@@ -85,10 +85,9 @@ namespace shitbird
             //IF RUNNING IN MONO REMEMBER THAT YOU HAVE TO EXPORT LD_LIBRARY_PATH TO POINT TO MONO LIB FOLDER FOR POSIXHELPER.SO
             Console.WriteLine("Memory Mapped File.");
             var filename = @"fofadasfddsho";
-            var size = 6000 * MEGABYTE;
-            using(var file = File.Open(filename, FileMode.OpenOrCreate)) {
-                file.SetLength(size + 1);
-            }
+            var size = 60 * MEGABYTE;
+            DeleteIfExists(filename);
+            SetInitialFilesize(size, filename);
             using (
                 var memmap = System.IO.MemoryMappedFiles.MemoryMappedFile.CreateFromFile(filename, FileMode.OpenOrCreate, "MyMap23", size,
                                                              MemoryMappedFileAccess.ReadWrite))
@@ -117,6 +116,21 @@ namespace shitbird
                 }
             }
             File.Delete(filename);
+        }
+
+        private static void SetInitialFilesize(long size, string filename)
+        {
+            //File must be created and sized ahead of time for mono
+            using (var file = File.Open(filename, FileMode.OpenOrCreate))
+            {
+                file.SetLength(size);
+                file.Close();
+            }
+        }
+
+        private static void DeleteIfExists(string filename)
+        {
+            if(File.Exists(filename)) File.Delete(filename);
         }
 
         private unsafe static void UnmanagedMemory()
